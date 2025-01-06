@@ -1,0 +1,470 @@
+---
+title: "DATA 603 Report Group 25 - Appendix"
+author: "Jeff Foster"
+date: "2024-11-26"
+output: pdf_document
+---
+
+# Assessing Key Factors of Song Popularity on Spotify - Appendix
+#### Members: Jeffrey Foster,  Anika Achari, Abdullah Ahmed, Jinglong Yu and Peter Yee
+
+```{r, echo = FALSE, results = 'hide'}
+spotify_data <- read.csv("spotify_songs.csv")
+```
+
+## Multiple Linear Regression Model Selection  
+
+An Individual Coefficients Test (t-test) will be completed to test if each individual variable should be included or excluded in our reduced model. We will test all of our independent variables against an $\alpha$ of 0.05.  
+
+Null Hypothesis:  
+$H_0: \beta_{k} = 0$  
+\
+Alternative Hypothesis:  
+$H_a: \beta_{k} \neq 0 (k = 1, 2, 3,..., p)$  
+
+### **Initial Regression Using All Variables**  
+```{r, echo = FALSE}
+spotify_data_lm <- lm(track_popularity ~ factor(playlist_genre) + factor(playlist_subgenre) + danceability + energy + key + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + factor(language), data = spotify_data)
+summary(spotify_data_lm)
+```
+
+From the R output, we can identify the variable with the largest p value is the *mode* variable.  
+With a p value of 0.52955 > 0.05, we can fail to reject the null hypothesis that the *mode* variable has no significant influence on the *track_popularity* variable.  
+We can remove the *mode* variable and re-test the model.  
+
+### **Reduction Model 1**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_1 <- lm(track_popularity ~ factor(playlist_genre) + factor(playlist_subgenre) + danceability + energy + key + loudness + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + factor(language), data = spotify_data)
+summary(spotify_data_lm_reduced_1)
+```
+
+From the R output, we can identify the variable with the largest p value is the *key* variable.  
+With a p value of 0.44847 > 0.05, we can fail to reject the null hypothesis that the *key* variable has no significant influence on the *track_popularity* variable.  
+We can remove the *key* variable and re-test the model.  
+
+### **Reduction Model 2**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_2 <- lm(track_popularity ~ factor(playlist_genre) + factor(playlist_subgenre) + danceability + energy + loudness + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + factor(language), data = spotify_data)
+summary(spotify_data_lm_reduced_2)
+```
+
+From the R output, we can identify the variable with the largest p value is the *speechiness* variable.  
+With a p value of 0.21641 > 0.05, we can fail to reject the null hypothesis that the *speechiness* variable has no significant influence on the *track_popularity* variable.  
+We can remove the *speechiness* variable and re-test the model.  
+
+### **Reduction Model 3**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_3 <- lm(track_popularity ~ factor(playlist_genre) + factor(playlist_subgenre) + danceability + energy + loudness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + factor(language), data = spotify_data)
+summary(spotify_data_lm_reduced_3)
+```
+
+From the R output, we can identify the variable with the largest p value is the *acousticness* variable.  
+With a p value of 0.15726 > 0.05, we can fail to reject the null hypothesis that the *acousticness* variable has no significant influence on the *track_popularity* variable.  
+We can remove the *acousticness* variable and re-test the model.  
+
+### **Reduction Model 4**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_4 <- lm(track_popularity ~ factor(playlist_genre) + factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms + factor(language), data = spotify_data)
+summary(spotify_data_lm_reduced_4)
+```
+
+From the R output, we can identify the variable with the largest p value is the *language* variable. The language variable has no factors that are below our $\alpha$ of 0.05.  
+With the factor with the smallest p value of 0.07553 > 0.05, we can fail to reject the null hypothesis that the *language* variable has no significant influence on the *track_popularity* variable.  
+We can remove the *language* variable and re-test the model.  
+
+### **Reduction Model 5**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_5 <- lm(track_popularity ~ factor(playlist_genre) + factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms, data = spotify_data)
+summary(spotify_data_lm_reduced_5)
+```
+
+
+A challenge identified is that five of the playlist_subgenre factors are producing **NA** for our necessary outputs. It is theorized that the playlist_subgenre variable may be linearly related to the playlist_genre variable. This would result in multicollinearity. To test for multicollinearity , we will calculate the **variance inflation factor (VIF)** for our model, which identifies correlation between independent variables.  
+
+### **Variance Inflation Factor (VIF) Test**  
+```{r, echo = FALSE}
+library(mctest)
+imcdiag(spotify_data_lm_reduced_5, method = "VIF")
+```
+
+From the R output, it is clear that multicollinearity has been identified between the playlist_genre and playlist_subgenre variables. Because this multicollinearity is creating singularities in our regression output, it cannot be ignored. To address the multicollinearity, we will remove one of the two variables, playlist_genre and playlist_subgenre, from our model.  
+To determine which variable should be dropped, we will create two regression models with each of the two variables removed. The outputs of these models will determine which model is the preferred model.  
+
+  
+### **Reduction Model with playlist_genre Removed**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_genre_rem <- lm(track_popularity ~ factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms, data = spotify_data)
+summary(spotify_data_lm_reduced_genre_rem)
+```
+
+
+### **Reduction Model with playlist_subgenre Removed**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_subgenre_rem <- lm(track_popularity ~ factor(playlist_genre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms, data = spotify_data)
+summary(spotify_data_lm_reduced_subgenre_rem)
+```
+
+From the R output, it is clear that the preferred model is the model that includes the playlist_subgenre variable and removes the playlist_genre variable.  
+The model that includes the playlist_genre variable has an Adjusted R-squared of 0.07451, meaning that the model only explains 7.45% of the variability in the track_popularity. Additionally, the model has an RSE (standard deviation of the unexplained variance) value of 23.68.  
+The model that includes the playlist_subgenre variable has an Adjusted R-squared of 0.152, meaning that the model only explains 15.2% of the variability in the track_popularity. Additionally, the model has an RSE (standard deviation of the unexplained variance) value of 22.67.  
+With a higher Adjusted R-squared and lwoer RSE, the model that includes the playlist_subgenre variable over the playlist_genre variable is preferred.  
+
+### **Preferred Reduced Multiple Linear Regression Model**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced <- lm(track_popularity ~ factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms, data = spotify_data)
+summary(spotify_data_lm_reduced)
+```
+
+The preferred Initial Multiple Linear Regression formula is:
+
+$$
+Y_{\text{trackpopularity}} = 63.54 - 12.72 \cdot \text{big room} - 1.87 \cdot \text{classic rock} + 10.77 \cdot \text{dance pop} \\
+- 4.79 \cdot \text{electro house} - 2.22 \cdot \text{electropop} - 12.47 \cdot \text{gangster rap} \\
+- 6.03 \cdot \text{hard rock} + 9.34 \cdot \text{hip hop} + 3.28 \cdot \text{hip pop} \\
+- 4.48 \cdot \text{indie poptimism} - 4.04 \cdot \text{latin hip hop} + 3.55 \cdot \text{latin pop} \\
+- 12.14 \cdot \text{neo soul} - 16.46 \cdot \text{new jack swing} + 12.15 \cdot \text{permanent wave} \\
+- 7.22 \cdot \text{pop edm} + 10.45 \cdot \text{post-teen pop} - 16.61 \cdot \text{progressive electro house} \\
+- 0.45 \cdot \text{reggaeton} - 8.50 \cdot \text{southern hip hop} + 3.56 \cdot \text{trap} \\
+- 2.22 \cdot \text{tropical} + 2.66 \cdot \text{urban contemporary} \\
++ 11.54 \cdot \text{danceability} - 18.80 \cdot \text{energy} + 0.856 \cdot \text{loudness} \\
+- 6.785 \cdot \text{instrumentalness} - 3.392 \cdot \text{liveness} - 2.891 \cdot \text{valence} \\
++ 0.01693 \cdot \text{tempo} - 0.00002987 \cdot \text{duration_ms}
+$$
+
+## Interaction Model Selection  
+
+An Individual Coefficients Test (t-test) will be completed to test if each individual interaction term should be included or excluded in our reduced interaction term model. We will test all of our interaction terms against an $\alpha$ of 0.05.  
+
+Null Hypothesis:  
+$H_0: \beta_{k} = 0$  
+\
+Alternative Hypothesis:  
+$H_a: \beta_{k} \neq 0 (k = 1, 2, 3,..., p)$  
+
+### **Initial Interaction Model Selection Using All Interaction Terms**  
+```{r, echo = FALSE}
+interaction_model = lm(track_popularity ~ (factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms)^2, data = spotify_data)
+summary(interaction_model)
+```
+
+Given the high quantity of interaction terms present in our initial interaction model, it is not feasible to sequentially identify each unique interaction term to be removed from the model. As such, the model reduction has been completed in bulk. We have failed to reject the null hypothesis for all interaction terms with p values greater than 0.05, as they are found to not be statistically significant at influencing our model. These interaction terms have been removed from our model.  
+
+We have rejected the null hypothesis in favour of the alternative hypothesis for all interaction terms with p values less than 0.05, as they are found to be statistically significant at influencing our model.  
+
+Our reduced model with our original variables and statistically significant interaction terms is fitted below.  
+
+### **Initial Interaction Model Selection Reduced Model**  
+```{r, echo = FALSE}
+Final_interaction_model = lm(track_popularity ~ factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms+factor(playlist_subgenre):energy+factor(playlist_subgenre):instrumentalness+factor(playlist_subgenre):duration_ms+loudness:instrumentalness+loudness:duration_ms +danceability:liveness, data = spotify_data)
+summary(Final_interaction_model)
+```
+
+The completed interaction model created above is an improvement over the original multiple regression model without interaction terms. With an improved RSE value of 22.51 and improved Adjusted R-squared value of 0.1639 with all statistically significant variables and interaction terms included, we can conclude that the regression model with interaction terms is an improvement.
+
+After completing our interaction model selection procedure, we have identified the preferred Multiple Linear Regression formula with interaction terms:
+
+$$
+Y_{\text{trackpopularity}} = 56.25 + 25.56 \cdot \text{big room} + 7.30 \cdot \text{classic rock} + 21.06 \cdot \text{dance pop} \\
++ 30.50 \cdot \text{electro house} + 36.50 \cdot \text{electropop} + 12.90 \cdot \text{gangster rap} \\
+- 3.56 \cdot \text{hard rock} + 22.26 \cdot \text{hip hop} + 28.34 \cdot \text{hip pop} \\
++ 12.21 \cdot \text{indie poptimism} + 10.33 \cdot \text{latin hip hop} + 36.12 \cdot \text{latin pop} \\
++ 5.82 \cdot \text{neo soul} - 13.18 \cdot \text{new jack swing} + 8.39 \cdot \text{permanent wave} \\
++ 24.19 \cdot \text{pop edm} + 28.44 \cdot \text{post-teen pop} + 4.24 \cdot \text{progressive electro house} \\
++ 22.44 \cdot \text{reggaeton} - 1.95 \cdot \text{southern hip hop} + 1.73 \cdot \text{trap} \\
+- 3.86 \cdot \text{tropical} + 19.36 \cdot \text{urban contemporary} \\
++ 7.21 \cdot \text{danceability} - 5.09 \cdot \text{energy} + 1.559 \cdot \text{loudness} \\
+- 33.43 \cdot \text{instrumentalness} - 17.22 \cdot \text{liveness} - 2.545 \cdot \text{valence} \\
++ 0.01595 \cdot \text{tempo} - 0.00002592 \cdot \text{duration\_ms} \\
+- 28.28 \cdot \text{big room:energy} - 13.95 \cdot \text{classic rock:energy} - 17.46 \cdot \text{dance pop:energy} \\
+- 29.41 \cdot \text{electro house:energy} - 27.55 \cdot \text{electropop:energy} - 21.47 \cdot \text{gangster rap:energy} \\
++ 4.49 \cdot \text{hard rock:energy} - 18.61 \cdot \text{hip hop:energy} - 12.23 \cdot \text{hip pop:energy} \\
+- 7.61 \cdot \text{indie poptimism:energy} - 6.08 \cdot \text{latin hip hop:energy} - 17.22 \cdot \text{latin pop:energy} \\
+- 11.10 \cdot \text{neo soul:energy} - 20.45 \cdot \text{new jack swing:energy} - 0.45 \cdot \text{permanent wave:energy} \\
+- 22.00 \cdot \text{pop edm:energy} - 30.34 \cdot \text{post-teen pop:energy} - 8.42 \cdot \text{progressive electro house:energy} \\
+- 27.97 \cdot \text{reggaeton:energy} - 6.25 \cdot \text{southern hip hop:energy} - 0.28 \cdot \text{trap:energy} \\
+- 14.80 \cdot \text{tropical:energy} - 20.12 \cdot \text{urban contemporary:energy} \\
++ 22.78 \cdot \text{big room:instrumentalness} + 10.01 \cdot \text{classic rock:instrumentalness} + 23.19 \cdot \text{dance pop:instrumentalness} \\
++ 19.26 \cdot \text{electro house:instrumentalness} + 11.54 \cdot \text{electropop:instrumentalness} + 28.47 \cdot \text{gangster rap:instrumentalness} \\
++ 1.001 \cdot \text{classic rock:instrumentalness} + 2.319 \cdot \text{dance pop:instrumentalness} \\
++ 1.926 \cdot \text{electro house:instrumentalness} + 1.154 \cdot \text{electropop:instrumentalness} \\
++ 2.847 \cdot \text{gangster rap:instrumentalness} + 2.344 \cdot \text{hard rock:instrumentalness} \\
+- 1.762 \cdot \text{hip hop:instrumentalness} + 1.346 \cdot \text{hip pop:instrumentalness} \\
++ 3.572 \cdot \text{indie poptimism:instrumentalness} - 1.062 \cdot \text{latin hip hop:instrumentalness} \\
++ 4.213 \cdot \text{latin pop:instrumentalness} + 3.547 \cdot \text{neo soul:instrumentalness} \\
+- 2.001 \cdot \text{new jack swing:instrumentalness} + 3.657 \cdot \text{permanent wave:instrumentalness} \\
++ 1.341 \cdot \text{pop edm:instrumentalness} + 2.447 \cdot \text{post-teen pop:instrumentalness} \\
++ 1.883 \cdot \text{progressive electro house:instrumentalness} + 2.567 \cdot \text{reggaeton:instrumentalness} \\
+- 1.762 \cdot \text{southern hip hop:instrumentalness} + 1.478 \cdot \text{trap:instrumentalness} \\
++ 2.011 \cdot \text{urban contemporary:instrumentalness} + 3.897 \cdot \text{danceability} \\
+- 4.005 \cdot \text{energy} + 1.241 \cdot \text{loudness} \\
+- 3.113 \cdot \text{liveness} - 2.765 \cdot \text{valence} + 0.01672 \cdot \text{tempo} \\
+- 0.00002712 \cdot \text{duration_ms}
+$$
+
+
+## Stepwise Model Selection  
+
+Another regression model we have implemented is the stepwise model selection. This method systematically includes or excludes independent variables based on their statistical significance and contribution to the overall performance of the model. The primary goal of stepwise regression is to develop an optimized model that balances complexity and predictive accuracy by retaining only the most relevant variables. It ensures that unnecessary predictors are excluded, thereby, minimizing the risk of overfitting while enhancing the interpretability of the model. The optimal model has been fit below.  
+
+### **Initial Stepwise Regression Model Selection**  
+```{r, echo = FALSE}
+library(MASS)
+
+selected_model <- lm(track_popularity ~ danceability + energy + key + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms, data = spotify_data)
+
+stepwise_model <- stepAIC(selected_model, direction = "both")
+summary(stepwise_model)
+```
+
+The preferred Stepwise Multiple Linear Regression formula identified is:
+
+$$
+Y_{\text{trackpopularity}} = 69.45 + 6.129 \cdot \text{danceability} - 21.40 \cdot \text{energy} + 1.054 \cdot \text{loudness} \\
++ 0.724 \cdot \text{mode} - 6.994 \cdot \text{speechiness} + 3.640 \cdot \text{acousticness} \\
+- 7.960 \cdot \text{instrumentalness} - 5.254 \cdot \text{liveness} + 0.03110 \cdot \text{tempo} \\
+- 0.00005071 \cdot \text{duration_ms}
+$$
+
+
+## All-Possible-Regressions Selection Procedure  
+
+We have also performed an all possible regressions using all subsets of predictors from our full regression model. This algorithm will select the best subset of predictors for regression of all the subsets of the same size and report metrics for the best regressions for each size of predictor subset. From this, we can select the best model out of the best models of each size from the full regression model by directly comparing the metrics of the  regressions like adjusted R-squared or Mallow’s CP criterion. The All-Possible-Regressions Selection Procedure has been completed below.
+
+### **Initial All-Possible-Regressions Selection Procedure**  
+```{r, echo = FALSE}
+library(leaps)
+library
+best.subsetExecSal=regsubsets(track_popularity ~ danceability + energy + key + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + factor(playlist_subgenre), data = spotify_data, nv=40 ) 
+summary(best.subsetExecSal)
+
+reg.summary=summary(best.subsetExecSal)
+rsquare=c(reg.summary$rsq)
+cp=c(reg.summary$cp)
+AdjustedR=c(reg.summary$adjr2)
+RSS=c(reg.summary$rss)
+BIC=c(reg.summary$bic)
+cbind(rsquare,cp,BIC,RSS,AdjustedR)
+```
+
+Based on the above completed All-Possible-Regressions Selection Procedure, we have identified the optimal model using the All-Possible-Regressions Selection Procedure to be model 32 from the output above. Model 31 has an Adjusted R-squared value of 0.1521 (the second highest of all models tested), a BIC value of -2753.76 (comparably very low), and a Mallow’s CP criterion of 30.85 (second lowest value of all models). Based on these three criteria, we have identified model 32 as the best model from the All-Possible-Regressions Selection Procedure.  
+
+
+### **Optimal Model Identified Using All-Possible-Regressions Selection Procedure**  
+```{r, echo = FALSE}
+resulting_lm = lm(track_popularity ~ danceability + energy + loudness + speechiness + acousticness + instrumentalness + liveness + valence + tempo + duration_ms + factor(playlist_subgenre), data = spotify_data) 
+summary(resulting_lm)
+```
+
+The preferred All-Possible-Regressions formula identified is:
+
+$$
+Y_{trackpopularity} = 62.46 +  11.77 \cdot \text{danceability} - 17.94 \cdot \text{energy} + 0.862 \cdot \text{loudness} \\
++ 1.488 \cdot \text{acousticness}  - 6.750 \cdot \text{instrumentalness} - 3.491 \cdot \text{liveness} \\
+- 3.022 \cdot \text{valence} + 0.01693 \cdot \text{tempo} - 0.00002937 \cdot \text{duration_ms} \\
++ 14.39 \cdot \text{latin} + 27.06 \cdot \text{pop} + 19.27 \cdot \text{r&b} + 20.17 \cdot \text{rap} \\
++ 16.61 \cdot \text{rock} - 12.78 \cdot \text{big room} - 1.88 \cdot \text{classic rock} \\
+- 4.901 \cdot \text{electro house} - 2.250 \cdot \text{electropop} - 12.87 \cdot \text{gangster rap} \\
+- 6.02 \cdot \text{hard rock} + 9.009 \cdot \text{hip hop} + 3.041 \cdot \text{hip pop} \\
+- 4.572 \cdot \text{indie poptimism} + 3.343 \cdot \text{latin pop} - 12.36 \cdot \text{neo soul} \\
+- 16.47 \cdot \text{new jack swing} + 12.19 \cdot \text{permanent wave} - 7.286 \cdot \text{pop edm} \\
++ 10.41 \cdot \text{post-teen pop} - 16.64 \cdot \text{progressive electro house} \\
+- .6866 \cdot \text{reggaeton} - 8.769 \cdot \text{southern hip hop} + 3.278 \cdot \text{trap} \\
+- 2.352 \cdot \text{tropical} + 2.392 \cdot \text{urban contemporary}
+$$
+
+## Regression Assumption Evaluation  
+
+The model developed in the Interaction Model Selection has been identified as our optimal multiple linear regression model. To ensure the validity and reliability of the final regression model, we rigorously tested it against standard assumptions of multiple linear regression. Each assumption evaluation is completed below.
+
+### **Linearity Assumption Testing**  
+```{r, echo = FALSE}
+library(ggplot2)
+ggplot(Final_interaction_model, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_smooth(method = 'loess', formula = 'y ~ x') +
+  geom_hline(yintercept = 0) +
+  ggtitle("Residuals vs Fitted Values") +
+  xlab("Fitted Values") +
+  ylab("Residuals")
+```
+
+In this plot, the residuals are primarily centered around zero, and the smooth line is nearly flat, indicating that the model captures the linear trend reasonably well. This suggests that the relationship between the fitted values and the residuals can be somewhat considered linear. However, there are slight deviations from randomness, as the residuals form subtle patterns and exhibit some curvature, particularly at the lower and higher ends of the fitted values. These patterns imply that the model may not fully capture non-linear aspects of the data.  
+
+## **Equal Variance Assumption Testing**
+```{r, echo = FALSE}
+ggplot(Final_interaction_model, aes(x = .fitted, y = sqrt(abs(.stdresid)))) +
+  geom_point(colour = "purple") +
+  geom_hline(yintercept = 0) +
+  geom_smooth(colour = "green4") +
+  ggtitle("Scale-Location plot: Standardized Residual vs Fitted values") +
+  xlab("Fitted Values") +
+  ylab("Square Root of |Standardized Residuals|")
+```
+
+In this plot, the residuals should ideally be randomly scattered with a flat smooth line, indicating consistent variance across the range of fitted values. However, the plot shows a slight increase in the spread of residuals as fitted values grow, suggesting potential heteroscedasticity, where the variance of residuals is not constant. This violation of the equal variance assumption can affect the reliability of confidence intervals and predictions generated by the regression model. Additionally, the smooth line is not perfectly flat and shows subtle variations, reinforcing concerns about non-constant variance. There is also some clustering of residuals, particularly at lower fitted values, which warrants further investigation. To address these issues, transformations of the response variable, such as a logarithmic, could be considered. Formal tests, such as the Breusch-Pagan test, may also be conducted to confirm the presence of heteroscedasticity.  
+
+**Heteroscedasticity: The Breusch-Pagan Test**
+```{r, echo = FALSE}
+library(lmtest)
+bptest(Final_interaction_model)
+```
+Null Hypothesis:  
+$H_0:$ Heteroscedasticity is not present (homoscedasticity)  
+\
+Alternative Hypothesis:  
+$H_a:$ Heteroscedasticity is present  
+
+With a p-value of 2.2e-16 being less than our $\alpha$ value of 0.05, we can reject the null hypothesis in favour of the alternative hypothesis and conclude that we do have heteroscedasticity.  
+
+## **Normality Assumption Testing**
+
+Null Hypothesis:  
+$H_0:$ The sample data are significantly normally distributed  
+\
+Alternative Hypothesis:  
+$H_a:$ The sample data are not significantly normally distributed   
+
+**Q-Q plot for Normality Testing**
+```{r, echo = FALSE}
+ggplot(Final_interaction_model, aes(sample = Final_interaction_model$residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  ggtitle("Q-Q Plot of Residuals") +
+  xlab("Theoretical Quantiles") +
+  ylab("Sample Quantiles")
+```
+
+The residuals deviate systematically from the diagonal line, forming an S-shaped pattern. This indicates excessive kurtosis, suggesting that the data may have heavier or lighter tails than a normal distribution. Specifically, the deviation in the lower tail and the upper tail (rising above the line) reflects heavy tails and potentially the presence of outliers or extreme residuals in both directions.  
+
+## **Multicollinearity Assumption Testing**  
+
+Multicollinearity can be safely ignored due to the presence of higher power variables and interaction terms.
+
+## **Outlier Assumption Testing**  
+
+**Residuals vs. Leverage plot**
+```{r, echo = FALSE}
+plot(Final_interaction_model,which = 5)
+```
+
+The majority of points are clustered near the center, indicating low leverage and minimal influence on the regression mode (Figure 4). However, a small number of points, such as those labeled 3882 and 10032, show high leverage and fall near or beyond the Cook's distance threshold, suggesting they may have a disproportionate impact on the model.
+
+**Cook's Distance**  
+```{r, echo = FALSE}
+plot(Final_interaction_model, pch = 18, col = "red", which = c(4))
+```
+
+This Cook's distance plot identifies influential observations in the dataset, with observations 3882, 10032, and 16005 showing a significantly high Cook's distance, indicating it may have an outsized impact on the model's fit. Most other observations fall well below the threshold, suggesting they are not influential. However considering the size of the dataset (18000+), this amount of influential points will not affect the data significantly.
+
+**Outlier Identification**  
+```{r, echo = FALSE}
+lev=hatvalues(Final_interaction_model)
+p = length(coef(Final_interaction_model))
+n = nrow(spotify_data)
+outlier3p = lev[lev>(3*p/n)]
+print("h_I>2p/n, outliers are")
+print(outlier3p)
+```
+
+At $3*p/n$ We identified a collection of outliers above and demonstrated in the leverage plot below.  
+
+**Leverage in spotify Dataset**
+```{r, echo = FALSE}
+plot(rownames(spotify_data),lev, main = "Leverage in spotify Dataset", xlab="observation",
+    ylab = "Leverage Value")
+abline(h = 3 *p/n, lty = 1)
+```
+
+This leverage plot shows the distribution of leverage values for observations in the Spotify dataset, with most observations having low leverage values close to zero. A few points exhibit high leverage, but can be ignored due to the size of the dataset.  
+We will remove these outliers from the dataset and re run our tests on our outlier adjusted data to attempt improved results.  
+
+**Removal of Outliers**  
+```{r, echo = FALSE}
+rows_to_remove <- c(29, 50, 82, 96, 114, 118, 126, 134, 142, 153, 166, 205, 210, 226, 264, 308, 317, 339, 343, 344, 352, 362, 396, 401, 477, 496, 510, 520, 616, 619, 635, 636, 653, 669, 691, 698, 718, 728, 746, 750, 756, 794, 798, 802, 828, 856, 879, 908, 940, 947, 975, 990, 993, 1035, 1049, 1055, 1067, 1087, 1111, 1119, 1136, 1195, 1212, 1248, 1269, 1325, 1330, 1366, 1372, 1377, 1395, 1468, 1502, 1510, 1522, 1524, 1525, 1534, 1542, 1543, 1615, 1642, 1660, 1703, 1708, 1735, 1744, 1747, 1769, 1788, 1799, 1804, 1815, 1828, 1889, 1901, 1929, 1934, 1983, 1994, 2010, 2025, 2052, 2107, 2109, 2126, 2133, 2142, 2153, 2190, 2198, 2216, 2245, 2250, 2256, 2309, 2372, 2375, 2413, 2418, 2421, 2452, 2469, 2496, 2508, 2509, 2529, 2577, 2640, 2654, 2666, 2683, 2685, 2697, 2733, 2759, 2784, 2807, 2859, 2886, 2892, 2914, 2918, 2934, 2943, 2991, 3001, 3006, 3036, 3055, 3058, 3081, 3146, 3165, 3234, 3256, 3290, 3310, 3314, 3355, 3450, 3475, 3501, 3623, 3638, 3644, 3652, 3668, 3687, 3712, 3732, 3738, 3752, 3797, 3798, 3836, 3842, 3843, 3869, 3882, 3884, 3890, 3898, 3917, 3920, 3962, 3981, 3995, 4016, 4085, 4118, 4146, 4154, 4161, 4177, 4204, 4272, 4308, 4380, 4407, 4417, 4445, 4467, 4500, 4510, 4591, 4600, 4611, 4627, 4714, 4770, 4808, 4818, 4833, 4855, 4920, 4925, 4930, 5004, 5006, 5030, 5072, 5131, 5137, 5162, 5168, 5197, 5259, 5267, 5269, 5293, 5302, 5312, 5333, 5361, 5378, 5380, 5533, 5549, 5556, 5586, 5617, 5626, 5655, 5667, 5675, 5678, 5680, 5723, 5739, 5751, 5785, 5799, 5807, 5819, 5837, 5842, 5871, 5876, 5888, 5896, 5924, 5950, 5964, 5977, 5995, 6012, 6047, 6054, 6059, 6107, 6149, 6177, 6185, 6229, 6258, 6292, 6319, 6321, 6344, 6354, 6361, 6365, 6371, 6374, 6375, 6378, 6446, 6447, 6475, 6505, 6532, 6570, 6624, 6674, 6676, 6718, 6792, 6793, 6809, 6836, 6844, 6845, 6856, 6865, 6919, 6955, 6967, 6970, 6979, 6983, 6999, 7117, 7118, 7163, 7165, 7185, 7190, 7192, 7211, 7240, 7331, 7339, 7352, 7391, 7409, 7417, 7432, 7446, 7472, 7485, 7492, 7506, 7508, 7527, 7568, 7578, 7585, 7602, 7610, 7613, 7619, 7620, 7647, 7662, 7687, 7710, 7742, 7797, 7822, 7840, 7848, 7883, 7892, 7898, 7921, 7950, 7952, 7964, 7997, 8017, 8028, 8031, 8033, 8139, 8143, 8161, 8212, 8226, 8230, 8302, 8313, 8329, 8352, 8435, 8495, 8567, 8608, 8611, 8615, 8623, 8631, 8643, 8674, 8683, 8711, 8722, 8789, 8832, 8834, 8875, 8887, 8900, 8916, 8993, 8998, 9021, 9030, 9051, 9054, 9061, 9072, 9122, 9138, 9169, 9173, 9188, 9193, 9209, 9225, 9231, 9244, 9262, 9276, 9281, 9282, 9351, 9360, 9366, 9370, 9371, 9375, 9379, 9390, 9400, 9447, 9473, 9507, 9523, 9524, 9563, 9564, 9575, 9599, 9609, 9610, 9619, 9653, 9656, 9679, 9710, 9713, 9718, 9720, 9763, 9791, 9804, 9825, 9830, 9838, 9844, 9924, 9930, 9941, 9983, 10010, 10032, 10045, 10059, 10063, 10078, 10085, 10109, 10235, 10247, 10252, 10253, 10263, 10337, 10360, 10369, 10391, 10392, 10414, 10423, 10449, 10450, 10484, 10531, 10555, 10628, 10634, 10638, 10712, 10721, 10731, 10735, 10738, 10739, 10741, 10787, 10802, 10836, 10839, 10853, 10864, 10897, 10906, 10918, 10926, 10937, 10947, 10951, 10956, 10964, 10975, 11004, 11029, 11057, 11086, 11099, 11153, 11196, 11205, 11233, 11245, 11276, 11283, 11311, 11319, 11320, 11322, 11353, 11355, 11403, 11405, 11415, 11453, 11455, 11514, 11535, 11566, 11569, 11597, 11600, 11604, 11627, 11648, 11667, 11668, 11689, 11701, 11705, 11748, 11751, 11812, 11830, 11870, 11940, 11967, 12034, 12059, 12060, 12068, 12096, 12110, 12127, 12135, 12161, 12174, 12179, 12181, 12218, 12225, 12258, 12261, 12280, 12282, 12287, 12350, 12379, 12408, 12467, 12470, 12483, 12498, 12499, 12580, 12606, 12689, 12712, 12714, 12725, 12728, 12733, 12735, 12742, 12777, 12796, 12879, 12909, 12927, 12934, 12987, 12999, 13006, 13021, 13068, 13101, 13172, 13174, 13266, 13282, 13348, 13359, 13372, 13385, 13430, 13447, 13454, 13479, 13500, 13503, 13522, 13540, 13569, 13594, 13603, 13617, 13622, 13651, 13693, 13716, 13718, 13741, 13768, 13783, 13848, 13864, 13869, 13878, 13946, 13984, 14002, 14037, 14043, 14065, 14100, 14120, 14135, 14250, 14252, 14261, 14272, 14294, 14366, 14407, 14455,16005,15084,14964)
+
+spotify_data_removed <- spotify_data[-rows_to_remove]
+```
+
+
+**Refitting of Best Linear Regression Model Identified**  
+```{r, echo = FALSE}
+spotify_data_lm_reduced_FINAL2 <-lm(track_popularity ~ factor(playlist_subgenre) + danceability + energy+ loudness + instrumentalness + liveness + valence + tempo +duration_ms+factor(playlist_subgenre):energy+factor(playlist_subgenre):instrumentalness+factor(playlist_subgenre):duration_ms+loudness:instrumentalness+loudness:duration_ms +danceability:liveness, data = spotify_data_removed)
+summary(spotify_data_lm_reduced_FINAL2)
+```
+
+**Linearity Assumption Testing (Outlier Adjusted Data)**  
+```{r, echo = FALSE}
+ggplot(spotify_data_lm_reduced_FINAL2, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_smooth(method = 'loess', formula = 'y ~ x') +
+  geom_hline(yintercept = 0) +
+  ggtitle("Residuals vs Fitted Values") +
+  xlab("Fitted Values") +
+  ylab("Residuals")
+```
+
+**Equal Variance Assumption Testing (Outlier Adjusted Data)**  
+```{r, echo = FALSE}
+ggplot(spotify_data_lm_reduced_FINAL2, aes(x = .fitted, y = sqrt(abs(.stdresid)))) +
+  geom_point(colour = "purple") +
+  geom_hline(yintercept = 0) +
+  geom_smooth(colour = "green4") +
+  ggtitle("Scale-Location plot: Standardized Residual vs Fitted values") +
+  xlab("Fitted Values") +
+  ylab("Square Root of |Standardized Residuals|")
+```
+
+**Residuals vs. Leverage plot (Outlier Adjusted Data)**  
+```{r, echo = FALSE}
+plot(spotify_data_lm_reduced_FINAL2,which=5)
+```
+
+**Cook's Distance (Outlier Adjusted Data)**  
+```{r, echo = FALSE}
+plot(spotify_data_lm_reduced_FINAL2,pch=18,col="red",which=c(4))
+```
+
+As can be seen the tests did not change in a meaningful way showing that removing the outliers is not enough to fix the issues within the dataset.
+
+
+## Dependent Variable Logit Transformation Model Identification  
+
+We have identified a possible issue with our dependent variable **(“track_popularity”)**. It appears to be a bounded percentile of how popular a song is among all songs. However, this type of variable is not the best suited for linear regression, as there is a possibility of our model outputting a predicted value outside of the domain of the dependent variable. To address this issue, we made the decision to perform a logit transformation of the popularity variable in order to obtain a continuous variable without a restrictive domain that would be better suited for linear regression. Therefore, we intend to take our best regression model procedure for the untransformed popularity variable and apply it on the logit transformation of popularity, to compare that model to our original analysis.
+
+We will add an epsilon value to our track_popularity value to avoid instances where 0 is our dependent variable.
+
+### **Logit Transformation to track_popularity**  
+```{r, echo = FALSE}
+epsilon = 0.0001
+spotify_data$popularity = (spotify_data$track_popularity + epsilon) / (100 + 2 * epsilon)
+spotify_data$log = log(spotify_data$popularity / (1-spotify_data$popularity))
+```
+
+### **Application of Logit Transformed Variable to the Preferred Reduced Multiple Linear Regression Model**  
+```{r, echo = FALSE}
+spotify_data_lm_logit_transformed_variable = lm(log ~ factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + tempo + duration_ms, data = spotify_data)
+summary(spotify_data_lm_logit_transformed_variable)
+```
+
+From the R output, we can identify the variable with the largest p value is the *tempo* variable.  
+With a p value of 0.21641 > 0.05, we can fail to reject the null hypothesis that the *tempo* variable has no significant influence on the *log* variable.  
+We can remove the *tempo* variable and re-test the model.  
+
+### **Application of Logit Transformed Variable to the Preferred Reduced Multiple Linear Regression Model (Reduced)**  
+```{r, echo = FALSE}
+spotify_data_lm_logit_transformed_variable_reducd = lm(log ~ factor(playlist_subgenre) + danceability + energy + loudness+ liveness + valence, data = spotify_data)
+summary(spotify_data_lm_logit_transformed_variable_reducd)
+```
+
+With a statistically significant model identified, we will now apply the logit transformed variable to the previously identified interaction model.
+
+### **Application of Logit Transformed Variable to the Preferred Reduced Multiple Linear Regression Model (Reduced)**  
+```{r, echo = FALSE}
+interaction_model_log = lm(log ~ factor(playlist_subgenre) + danceability + energy + loudness + instrumentalness + liveness + valence + duration_ms+factor(playlist_subgenre):energy + factor(playlist_subgenre):instrumentalness + factor(playlist_subgenre):duration_ms + loudness:instrumentalness + loudness:duration_ms + danceability:liveness, data = spotify_data)
+summary(interaction_model_log)
+```
+
+The completed interaction model created above is an improvement over the original multiple regression model without interaction terms for the logit transformed dependent variable. With an improved RSE value of 3.851 and improved Adjusted R-squared value of 0.0970 with all statistically significant variables and interaction terms included, we can conclude that the regression model with interaction terms on the logit transformed is an improvement over the model without the interaction terms.  
+
+However, it is not an improvement over the model with the non-transformed dependent variable.
+
